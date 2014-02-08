@@ -38,7 +38,6 @@ namespace sqlservermanagementobjects.Common
             if (failedStep == null)
                 throw new ArgumentNullException("No failed step found for job " + failedJob.Name);
             
-            DataTable data = failedStep.EnumLogs();
             JobHistoryFilter filter = new JobHistoryFilter()
             {
                 JobID = failedJob.JobID,
