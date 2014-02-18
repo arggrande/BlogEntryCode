@@ -19,9 +19,9 @@ namespace sqlservermanagementobjects.Common
                 throw new ArgumentNullException("failedJob steps cannot be null or 0");
 
 
-            for (int i = (failedJob.JobSteps.Count-1); i >= 0; --i)
+            for (int i = (failedJob.JobSteps.Count-1); i >= 0; i--)
             {
-                if (failedJob.JobSteps[i].LastRunOutcome == CompletionResult.Failed)
+                if (failedJob.JobSteps[i].LastRunOutcome == CompletionResult.Failed & failedJob.JobSteps[i].LastRunDate > DateTime.MinValue)
                     return failedJob.JobSteps[i];
             }
             
@@ -48,7 +48,7 @@ namespace sqlservermanagementobjects.Common
 
             var jobHistory = failedJob.EnumHistory(filter).Select("StepName='" + failedStep.Name + "'", "");
 
-            if (jobHistory != null)
+            if (jobHistory != null && jobHistory.Length > 0)
                 return jobHistory[0]["Message"].ToString();
 
             return string.Empty;

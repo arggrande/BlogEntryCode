@@ -4,76 +4,85 @@ using System.Threading;
 using Microsoft.SqlServer.Management.Smo.Agent;
 using sqlservermanagementobjects.Common;
 using System.Data;
+using System.Threading.Tasks;
 namespace sqlservermanagementobjects
 {
     class Program
     {
         const string _server = "(local)";       // this will only work if you are running a default local sql instance, otherwise substitute your given server here.
         const string _job = "MyAwesomeJob";
-
+        const int _interval = 1000;
         static void Main(string[] args)
         {
             
             try
             {
-                WriteLine("Connecting to " + _server + " instance of SQL Server 2008...", ConsoleColor.Green);
+                WriteInfo("Connecting to " + _server + " instance of SQL Server 2008...");
 
                 Server server = new Server(_server);
 
                 if (server.ConnectionContext.IsOpen)
                 {
-                    WriteLine("Oh no, something weird happened! The Server object shouldnt be opened at this point!", ConsoleColor.Red);
+                    WriteError("Oh no, something weird happened! The Server object shouldnt be opened at this point!");
                     return;
                 }
-                WriteLine("Server object is active (but not connected)!",  ConsoleColor.Green);
+                WriteInfo("Server object is active (but not connected)!");
 
-                WriteLine("Retrieving '" + _job + "' SQL Job on the local SQL Agent.", ConsoleColor.Green);
+                WriteInfo("Retrieving '" + _job + "' SQL Job on the local SQL Agent.");
+
                 var job = server.JobServer.Jobs[_job];
 
-                WriteLine("Job object is active.", ConsoleColor.Green);
+                WriteInfo("Job object is active.");
+
+                var lastRunDate = job.LastRunDate;
+
                 job.Start();
-
-                Thread.Sleep(1000); // I realise this isnt ideal, but there can be a delay between the 
-                                    //.Start() and the status of the Job updating correctly, indicating the job is being executed.
-
                 job.Refresh();
 
-                while (true)
+
+                // The job.LastRunDate will only change once the job finishes executing, providing a way of monitoring the job
+                while (job.LastRunDate == lastRunDate)
                 {
+                    Thread.Sleep(_interval);
+                    job.Refresh();
+                }
 
-                    if (job.CurrentRunStatus != JobExecutionStatus.Executing)
-                    {
-                        if (job.LastRunOutcome == CompletionResult.Succeeded)
-                            WriteLine("Hooray! Job Successful", ConsoleColor.Cyan);
-                        else
-                        {
-                            WriteLine("Oh Noes! Job failed!", ConsoleColor.Red);
-                            WriteLine("Job failed with message: " + job.GetLastFailedMessageFromJob(), ConsoleColor.Red);
-                        }
-                           
-                        break;
-                    }
-                    job.Refresh();      // You must call refresh each iteration, as the property doesnt update automatically.
-
-                    WriteLine("Waiting...", ConsoleColor.Yellow);
-                    Thread.Sleep(1000);
+                if (job.LastRunOutcome == CompletionResult.Succeeded)
+                    WriteInfo("Hooray! Job Successful");
+                else
+                {
+                    WriteError("Oh Noes! Job failed!");
+                    WriteError("Job failed with message: " + job.GetLastFailedMessageFromJob());
                 }
             }
             catch(Exception ex)
             {
-                WriteLine("An error occurred.", ConsoleColor.Red);
-                WriteLine("Message: " + ex.Message, ConsoleColor.Red);
+                WriteError("An error occurred.");
+                WriteError("Message: " + ex.Message);
             }
 
-            WriteLine("Press any key to exit.", ConsoleColor.Cyan);
+            WriteInfo("Press any key to exit.");
             Console.ReadKey();
         }
 
-        static void WriteLine(string text, ConsoleColor color)
+   
+
+        static void WriteInfo(string text)
         {
-            Console.ForegroundColor = color;
+            Console.ForegroundColor = ConsoleColor.Cyan;
             Console.WriteLine(text);
         }
 
+        static void WriteWarning(string text)
+        {
+            Console.ForegroundColor =  ConsoleColor.Yellow;
+            Console.WriteLine(text);
+        }
+
+        static void WriteError(string text)
+        {
+            Console.ForegroundColor =  ConsoleColor.Red;
+            Console.WriteLine(text);
+        }
     }
 }
