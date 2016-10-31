@@ -1,4 +1,4 @@
-The source code for the solution from the Blog Entry <b>'Adventures with SQL Server Management Objects'</b> located [here](http://pendingtech.wordpress.com/2014/02/05/adventures-with-sql-server-management-objects).
+The source code for the solution from the Blog Entry <b>'Adventures with SQL Server Management Objects'</b> located [here](https://pendingtechnical.azurewebsites.net/adventures-with-sql-server-management-objects/).
 
 Current Requirements:
 
